@@ -17,8 +17,8 @@ import snownee.jade.api.BlockAccessor;
 import snownee.jade.api.IBlockComponentProvider;
 import snownee.jade.api.ITooltip;
 import snownee.jade.api.config.IPluginConfig;
-import snownee.jade.api.ui.IElement;
-import snownee.jade.api.ui.IElementHelper;
+import snownee.jade.api.ui.Element;
+import snownee.jade.api.ui.JadeUI;
 
 /** Adds remembered item icons beneath Jade's normal block information. */
 public final class ContainerContentsProvider implements IBlockComponentProvider {
@@ -46,12 +46,13 @@ public final class ContainerContentsProvider implements IBlockComponentProvider 
             return;
         }
 
-        IElementHelper elements = IElementHelper.get();
         int column = 0;
         boolean rowStarted = false;
         for (ItemStack stack : snapshot.stacks()) {
-            if (stack == null || stack.isEmpty()) continue;
-            IElement item = elements.item(stack.copy());
+            if (stack == null || stack.isEmpty()) {
+                continue;
+            }
+            Element item = JadeUI.item(stack.copy());
             if (!rowStarted || column >= 9) {
                 tooltip.add(item);
                 rowStarted = true;
