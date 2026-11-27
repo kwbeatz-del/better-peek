@@ -45,16 +45,21 @@ public final class HudEditorScreen extends Screen {
     }
 
     private int x(int panel) {
-        if (panel == 0) return layout().worldX < 0
-            ? width - panelWidth(worldSnapshot, layout().worldScale) - MARGIN : layout().worldX;
-        return layout().inventoryX < 0 ? MARGIN : layout().inventoryX;
+        PreviewSnapshot snapshot = snapshot(panel);
+        int panelWidth = panelWidth(snapshot, scale(panel));
+        int requested = panel == 0
+            ? (layout().worldX < 0 ? width - panelWidth - MARGIN : layout().worldX)
+            : (layout().inventoryX < 0 ? MARGIN : layout().inventoryX);
+        return Math.max(0, Math.min(Math.max(0, width - panelWidth), requested));
     }
 
     private int y(int panel) {
-        if (panel == 0) return layout().worldY < 0 ? MARGIN : layout().worldY;
-        return layout().inventoryY < 0
-            ? height - panelHeight(inventorySnapshot, layout().inventoryScale) - MARGIN
-            : layout().inventoryY;
+        PreviewSnapshot snapshot = snapshot(panel);
+        int panelHeight = panelHeight(snapshot, scale(panel));
+        int requested = panel == 0
+            ? (layout().worldY < 0 ? MARGIN : layout().worldY)
+            : (layout().inventoryY < 0 ? height - panelHeight - MARGIN : layout().inventoryY);
+        return Math.max(0, Math.min(Math.max(0, height - panelHeight), requested));
     }
 
     private float scale(int panel) {
