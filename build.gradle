@@ -5,14 +5,10 @@ plugins {
 
 version = project.mod_version
 group = project.maven_group
-
-base {
-    archivesName = project.archives_base_name
-}
+base { archivesName = project.archives_base_name }
 
 loom {
     splitEnvironmentSourceSets()
-
     mods {
         "betterpeek" {
             sourceSet sourceSets.main
@@ -23,10 +19,8 @@ loom {
 
 repositories {
     mavenCentral()
-    maven {
-        name = "Fabric"
-        url = uri("https://maven.fabricmc.net/")
-    }
+    maven { name = "Fabric"; url = uri("https://maven.fabricmc.net/") }
+    maven { name = "Modrinth"; url = "https://api.modrinth.com/maven" }
 }
 
 dependencies {
@@ -34,14 +28,12 @@ dependencies {
     mappings "net.fabricmc:yarn:${project.yarn_mappings}:v2"
     modImplementation "net.fabricmc:fabric-loader:${project.loader_version}"
     modImplementation "net.fabricmc.fabric-api:fabric-api:${project.fabric_version}"
+    modCompileOnly "maven.modrinth:jade:21.0.1+fabric"
 }
 
 processResources {
     inputs.property "version", project.version
-
-    filesMatching("fabric.mod.json") {
-        expand "version": project.version
-    }
+    filesMatching("fabric.mod.json") { expand "version": project.version }
 }
 
 tasks.withType(JavaCompile).configureEach {
@@ -56,19 +48,15 @@ java {
 }
 
 jar {
-    from("LICENSE") {
-        rename { "${it}_${project.base.archivesName.get()}" }
-    }
+    from("LICENSE") { rename { "${it}_${project.base.archivesName.get()}" } }
 }
 
 publishing {
     publications {
         create("mavenJava", MavenPublication) {
-            artifactId = project.archives_base_name
+            artifactId = project.base.archivesName.get()
             from components.java
         }
     }
-
-    repositories {
-    }
+    repositories {}
 }
