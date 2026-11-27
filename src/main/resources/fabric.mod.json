@@ -3,35 +3,28 @@
   "id": "betterpeek",
   "version": "${version}",
   "name": "BetterPeek",
-  "description": "Hover a chest, barrel, or shulker box and see what's inside. Client-side only, no server install required.",
-  "authors": [
-    "Nekuzaky"
-  ],
+  "description": "Shows remembered container contents in Jade's tooltip.",
+  "authors": ["Nekuzaky"],
   "contact": {
-    "homepage": "https://github.com/Nekuzaky/BetterPeek",
-    "sources": "https://github.com/Nekuzaky/BetterPeek",
-    "issues": "https://github.com/Nekuzaky/BetterPeek/issues"
+    "homepage": "https://github.com/kwbeatz-del/better-peek",
+    "sources": "https://github.com/kwbeatz-del/better-peek",
+    "issues": "https://github.com/kwbeatz-del/better-peek/issues"
   },
   "license": "MIT",
   "environment": "client",
   "entrypoints": {
-    "main": [
-      "com.betterpeek.BetterPeekMod"
-    ],
-    "client": [
-      "com.betterpeek.client.BetterPeekClientMod"
-    ]
+    "main": ["com.betterpeek.BetterPeekMod"],
+    "client": ["com.betterpeek.client.BetterPeekClientMod"],
+    "jade": ["com.betterpeek.client.jade.BetterPeekJadePlugin"]
   },
   "mixins": [
-    {
-      "config": "betterpeek.client.mixins.json",
-      "environment": "client"
-    }
+    { "config": "betterpeek.client.mixins.json", "environment": "client" }
   ],
   "depends": {
     "fabricloader": ">=0.18.4",
     "fabric-api": "*",
     "minecraft": "~1.21.11",
     "java": ">=21"
-  }
+  },
+  "suggests": { "jade": "*" }
 }

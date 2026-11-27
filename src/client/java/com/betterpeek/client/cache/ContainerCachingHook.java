@@ -3,6 +3,9 @@ package com.betterpeek.client.cache;
 import com.betterpeek.BetterPeekMod;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientLifecycleEvents;
 import net.fabricmc.fabric.api.client.screen.v1.ScreenEvents;
+import net.minecraft.block.BlockState;
+import net.minecraft.block.ChestBlock;
+import net.minecraft.block.enums.ChestType;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.screen.ingame.HandledScreen;
 import net.minecraft.entity.player.PlayerInventory;
@@ -10,24 +13,17 @@ import net.minecraft.item.ItemStack;
 import net.minecraft.screen.ScreenHandler;
 import net.minecraft.screen.slot.Slot;
 import net.minecraft.text.Text;
+import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.math.Direction;
 import net.minecraft.util.hit.BlockHitResult;
 import net.minecraft.util.hit.HitResult;
-import net.minecraft.util.math.BlockPos;
 
 import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Watches for {@link HandledScreen} openings and, when the player has the
- * crosshair pointed at a block at that moment, captures the visible
- * container-side slot stacks into {@link ContainerCache}.
- *
- * <p>"Container-side" means slots whose backing inventory is not the
- * player's own — we drop everything from {@link PlayerInventory} so we only
- * cache the chest/barrel/shulker grid, never the player's hotbar.
- *
- * <p>The cache is wiped on disconnect to avoid leaking snapshots from a
- * previous world into the next one.
+ * Captures container contents when a handled screen opens and remembers them
+ * at the block position. Double-chest snapshots are stored for both halves.
  */
 public final class ContainerCachingHook {
 
@@ -40,19 +36,13 @@ public final class ContainerCachingHook {
             if (pos == null) {
                 return;
             }
-            // Defer the actual capture to a single render-cycle later: the
-            // ScreenHandler exists at AFTER_INIT but slot stacks may still be
-            // empty for one tick while the server pushes the initial sync.
-            // Hooking on the first remove() gives us the populated state.
             ScreenEvents.afterTick(handled).register(s -> {
                 if (!entriesAreEmpty(handled.getScreenHandler())) {
-                    capture(handled, pos);
+                    capture(client, handled, pos);
                 }
             });
         });
 
-        // Wipe the cache between worlds so we don't show stale snapshots from
-        // the previous server / save.
         ClientLifecycleEvents.CLIENT_STOPPING.register(client -> ContainerCache.get().clear());
     }
 
@@ -76,7 +66,7 @@ public final class ContainerCachingHook {
         return true;
     }
 
-    private static void capture(HandledScreen<?> screen, BlockPos pos) {
+    private static void capture(MinecraftClient client, HandledScreen<?> screen, BlockPos pos) {
         ScreenHandler handler = screen.getScreenHandler();
         List<ItemStack> containerStacks = new ArrayList<>();
         for (Slot slot : handler.slots) {
@@ -94,7 +84,44 @@ public final class ContainerCachingHook {
         int rows = (slotCount + columns - 1) / columns;
         Text title = screen.getTitle();
 
-        BetterPeekMod.LOGGER.debug("[BetterPeek] cached {} slots at {}", slotCount, pos);
-        ContainerCache.get().put(pos, title, columns, rows, containerStacks);
+        ContainerCache cache = ContainerCache.get();
+        cache.put(pos, title, columns, rows, containerStacks);
+
+        BlockPos otherHalf = getOtherChestHalf(client, pos);
+        if (otherHalf != null) {
+            cache.put(otherHalf, title, columns, rows, containerStacks);
+            BetterPeekMod.LOGGER.debug("[BetterPeek] cached double chest ({} slots) at {} and {}", slotCount, pos, otherHalf);
+        } else {
+            BetterPeekMod.LOGGER.debug("[BetterPeek] cached {} slots at {}", slotCount, pos);
+        }
+    }
+
+    private static BlockPos getOtherChestHalf(MinecraftClient client, BlockPos pos) {
+        if (client.world == null) {
+            return null;
+        }
+
+        BlockState state = client.world.getBlockState(pos);
+        if (!(state.getBlock() instanceof ChestBlock)) {
+            return null;
+        }
+
+        ChestType chestType = state.get(ChestBlock.CHEST_TYPE);
+        if (chestType == ChestType.SINGLE) {
+            return null;
+        }
+
+        Direction facing = state.get(ChestBlock.FACING);
+        Direction offset = chestType == ChestType.LEFT
+            ? facing.rotateYCounterclockwise()
+            : facing.rotateYClockwise();
+        BlockPos otherPos = pos.offset(offset);
+
+        BlockState otherState = client.world.getBlockState(otherPos);
+        if (!(otherState.getBlock() instanceof ChestBlock)
+            || otherState.get(ChestBlock.CHEST_TYPE) == ChestType.SINGLE) {
+            return null;
+        }
+        return otherPos;
     }
 }
