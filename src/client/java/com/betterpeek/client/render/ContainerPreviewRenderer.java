@@ -2,19 +2,16 @@ package com.betterpeek.client.render;
 
 import com.betterpeek.client.HudLayoutConfig;
 import com.betterpeek.client.PreviewState;
-import com.betterpeek.client.detect.InventoryShulkerDetector;
 import com.betterpeek.client.detect.WorldContainerDetector;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.DrawContext;
-import net.minecraft.client.gui.screen.Screen;
 import net.minecraft.client.render.RenderTickCounter;
 
-/** Coordinates the world-container HUD preview and inventory-shulker preview. */
+/** Renders the world-container preview only. Inventory shulkers are handled by dedicated tooltip mods. */
 public final class ContainerPreviewRenderer {
     private static final int SCREEN_MARGIN = 8;
 
     private final WorldContainerDetector worldDetector = new WorldContainerDetector();
-    private final InventoryShulkerDetector inventoryDetector = new InventoryShulkerDetector();
     private final PreviewGridRenderer gridRenderer = new PreviewGridRenderer();
 
     public void renderHud(DrawContext context, RenderTickCounter tickCounter) {
@@ -32,27 +29,6 @@ public final class ContainerPreviewRenderer {
         int requestedX = layout.worldX >= 0 ? layout.worldX
             : context.getScaledWindowWidth() - panelWidth - SCREEN_MARGIN;
         int requestedY = layout.worldY >= 0 ? layout.worldY : SCREEN_MARGIN;
-        int anchorX = clamp(requestedX, context.getScaledWindowWidth() - panelWidth);
-        int anchorY = clamp(requestedY, context.getScaledWindowHeight() - panelHeight);
-        drawScaled(context, snapshot, anchorX, anchorY, scale);
-    }
-
-    public void renderScreen(Screen screen, DrawContext context, int mouseX, int mouseY, float tickDelta) {
-        if (!PreviewState.get().enabled()) return;
-        MinecraftClient client = MinecraftClient.getInstance();
-        if (client == null) return;
-
-        PreviewSnapshot snapshot = inventoryDetector.detect(client);
-        if (snapshot == null || snapshot.isEmpty()) return;
-
-        HudLayoutConfig layout = HudLayoutConfig.get();
-        float scale = layout.inventoryScale;
-        int panelWidth = Math.round((snapshot.columns() * 16 + 8) * scale);
-        int panelHeight = Math.round((snapshot.rows() * 16 + 20) * scale);
-        int requestedX = layout.inventoryX >= 0 ? layout.inventoryX
-            : Math.min(mouseX + 12, context.getScaledWindowWidth() - panelWidth - SCREEN_MARGIN);
-        int requestedY = layout.inventoryY >= 0 ? layout.inventoryY
-            : Math.max(mouseY - panelHeight - 4, SCREEN_MARGIN);
         int anchorX = clamp(requestedX, context.getScaledWindowWidth() - panelWidth);
         int anchorY = clamp(requestedY, context.getScaledWindowHeight() - panelHeight);
         drawScaled(context, snapshot, anchorX, anchorY, scale);
