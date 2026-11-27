@@ -1,4 +1,5 @@
 {
   "key.categories.betterpeek": "BetterPeek",
-  "key.betterpeek.toggle_preview": "Toggle container preview"
+  "key.betterpeek.toggle_preview": "Toggle container preview",
+  "key.betterpeek.open_hud_editor": "Open HUD layout editor"
 }
