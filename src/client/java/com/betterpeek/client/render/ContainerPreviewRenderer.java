@@ -27,10 +27,13 @@ public final class ContainerPreviewRenderer {
 
         HudLayoutConfig layout = HudLayoutConfig.get();
         float scale = layout.worldScale;
-        int width = snapshot.columns() * 16 + 8;
-        int anchorX = layout.worldX >= 0 ? layout.worldX
-            : context.getScaledWindowWidth() - Math.round(width * scale) - SCREEN_MARGIN;
-        int anchorY = layout.worldY >= 0 ? layout.worldY : SCREEN_MARGIN;
+        int panelWidth = Math.round((snapshot.columns() * 16 + 8) * scale);
+        int panelHeight = Math.round((snapshot.rows() * 16 + 20) * scale);
+        int requestedX = layout.worldX >= 0 ? layout.worldX
+            : context.getScaledWindowWidth() - panelWidth - SCREEN_MARGIN;
+        int requestedY = layout.worldY >= 0 ? layout.worldY : SCREEN_MARGIN;
+        int anchorX = clamp(requestedX, context.getScaledWindowWidth() - panelWidth);
+        int anchorY = clamp(requestedY, context.getScaledWindowHeight() - panelHeight);
         drawScaled(context, snapshot, anchorX, anchorY, scale);
     }
 
@@ -44,13 +47,19 @@ public final class ContainerPreviewRenderer {
 
         HudLayoutConfig layout = HudLayoutConfig.get();
         float scale = layout.inventoryScale;
-        int width = snapshot.columns() * 16 + 8;
-        int height = snapshot.rows() * 16 + 20;
-        int anchorX = layout.inventoryX >= 0 ? layout.inventoryX
-            : Math.min(mouseX + 12, context.getScaledWindowWidth() - Math.round(width * scale) - SCREEN_MARGIN);
-        int anchorY = layout.inventoryY >= 0 ? layout.inventoryY
-            : Math.max(mouseY - Math.round(height * scale) - 4, SCREEN_MARGIN);
+        int panelWidth = Math.round((snapshot.columns() * 16 + 8) * scale);
+        int panelHeight = Math.round((snapshot.rows() * 16 + 20) * scale);
+        int requestedX = layout.inventoryX >= 0 ? layout.inventoryX
+            : Math.min(mouseX + 12, context.getScaledWindowWidth() - panelWidth - SCREEN_MARGIN);
+        int requestedY = layout.inventoryY >= 0 ? layout.inventoryY
+            : Math.max(mouseY - panelHeight - 4, SCREEN_MARGIN);
+        int anchorX = clamp(requestedX, context.getScaledWindowWidth() - panelWidth);
+        int anchorY = clamp(requestedY, context.getScaledWindowHeight() - panelHeight);
         drawScaled(context, snapshot, anchorX, anchorY, scale);
+    }
+
+    private static int clamp(int value, int screenExtent) {
+        return Math.max(0, Math.min(Math.max(0, screenExtent), value));
     }
 
     private void drawScaled(DrawContext context, PreviewSnapshot snapshot, int x, int y, float scale) {
