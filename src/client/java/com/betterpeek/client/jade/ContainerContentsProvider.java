@@ -46,6 +46,12 @@ public final class ContainerContentsProvider implements IBlockComponentProvider 
             return;
         }
 
+        // Keep Jade's block icon pinned to the top when BetterPeek increases tooltip height.
+        Element blockIcon = tooltip.getIcon();
+        if (blockIcon != null) {
+            blockIcon.alignSelfStart();
+        }
+
         int column = 0;
         boolean rowStarted = false;
         for (ItemStack stack : snapshot.stacks()) {
