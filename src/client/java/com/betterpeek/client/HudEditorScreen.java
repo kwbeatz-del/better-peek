@@ -2,10 +2,13 @@ package com.betterpeek.client;
 
 import com.betterpeek.client.render.PreviewGridRenderer;
 import com.betterpeek.client.render.PreviewSnapshot;
+import net.minecraft.client.gui.Click;
 import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.gui.screen.Screen;
+import net.minecraft.client.input.KeyInput;
 import net.minecraft.item.ItemStack;
 import net.minecraft.text.Text;
+import org.lwjgl.glfw.GLFW;
 
 import java.util.Collections;
 
@@ -20,6 +23,7 @@ public final class HudEditorScreen extends Screen {
     private boolean resizing;
     private double grabX;
     private double grabY;
+    private float initialScale;
 
     public HudEditorScreen(PreviewSnapshot worldSnapshot, PreviewSnapshot inventorySnapshot) {
         super(Text.literal("BetterPeek HUD Editor"));
@@ -102,8 +106,12 @@ public final class HudEditorScreen extends Screen {
     }
 
     @Override
-    public boolean mouseClicked(double mouseX, double mouseY, int button) {
-        if (button != 0) return super.mouseClicked(mouseX, mouseY, button);
+    public boolean mouseClicked(Click click, boolean doubled) {
+        if (click.button() != GLFW.GLFW_MOUSE_BUTTON_LEFT) {
+            return super.mouseClicked(click, doubled);
+        }
+        double mouseX = click.x();
+        double mouseY = click.y();
         for (int panel = 1; panel >= 0; panel--) {
             int px = x(panel), py = y(panel);
             int w = panelWidth(snapshot(panel), scale(panel));
@@ -113,6 +121,7 @@ public final class HudEditorScreen extends Screen {
                 resizing = mouseX >= px + w - HANDLE && mouseY >= py + h - HANDLE;
                 grabX = mouseX - px;
                 grabY = mouseY - py;
+                initialScale = scale(panel);
                 return true;
             }
         }
@@ -121,10 +130,15 @@ public final class HudEditorScreen extends Screen {
     }
 
     @Override
-    public boolean mouseDragged(double mouseX, double mouseY, int button, double deltaX, double deltaY) {
-        if (selected < 0 || button != 0) return super.mouseDragged(mouseX, mouseY, button, deltaX, deltaY);
+    public boolean mouseDragged(Click click, double offsetX, double offsetY) {
+        if (selected < 0 || click.button() != GLFW.GLFW_MOUSE_BUTTON_LEFT) {
+            return super.mouseDragged(click, offsetX, offsetY);
+        }
+
+        double mouseX = click.x() + offsetX;
+        double mouseY = click.y() + offsetY;
         if (resizing) {
-            float next = scale(selected) + (float) Math.max(deltaX, deltaY) / 180.0f;
+            float next = initialScale + (float) Math.max(offsetX, offsetY) / 180.0f;
             next = Math.max(0.5f, Math.min(2.5f, next));
             if (selected == 0) layout().worldScale = next;
             else layout().inventoryScale = next;
@@ -146,8 +160,8 @@ public final class HudEditorScreen extends Screen {
     }
 
     @Override
-    public boolean mouseReleased(double mouseX, double mouseY, int button) {
-        if (button == 0 && selected >= 0) {
+    public boolean mouseReleased(Click click) {
+        if (click.button() == GLFW.GLFW_MOUSE_BUTTON_LEFT && selected >= 0) {
             int px = x(selected), py = y(selected);
             int w = panelWidth(snapshot(selected), scale(selected));
             int h = panelHeight(snapshot(selected), scale(selected));
@@ -161,16 +175,16 @@ public final class HudEditorScreen extends Screen {
             layout().save();
             return true;
         }
-        return super.mouseReleased(mouseX, mouseY, button);
+        return super.mouseReleased(click);
     }
 
     @Override
-    public boolean keyPressed(int keyCode, int scanCode, int modifiers) {
-        if (keyCode == 82) {
+    public boolean keyPressed(KeyInput input) {
+        if (input.key() == GLFW.GLFW_KEY_R) {
             layout().reset();
             return true;
         }
-        return super.keyPressed(keyCode, scanCode, modifiers);
+        return super.keyPressed(input);
     }
 
     @Override
