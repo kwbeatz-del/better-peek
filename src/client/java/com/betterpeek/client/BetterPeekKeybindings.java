@@ -1,7 +1,6 @@
 package com.betterpeek.client;
 
 import com.betterpeek.BetterPeekMod;
-import com.betterpeek.client.detect.InventoryShulkerDetector;
 import com.betterpeek.client.detect.WorldContainerDetector;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.fabricmc.fabric.api.client.keybinding.v1.KeyBindingHelper;
@@ -35,8 +34,7 @@ public final class BetterPeekKeybindings {
         while (togglePreviewKey.wasPressed()) PreviewState.get().toggle();
         while (openEditorKey.wasPressed()) {
             var worldPreview = new WorldContainerDetector().detect(client);
-            var inventoryPreview = new InventoryShulkerDetector().detect(client);
-            client.setScreen(new HudEditorScreen(worldPreview, inventoryPreview));
+            client.setScreen(new HudEditorScreen(worldPreview, null));
         }
     }
 }
